@@ -54,15 +54,15 @@ export async function PUT(request, { params }) {
         if (status || trackingId) {
             try {
                 // Call email notification API
-                await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/notifications/order-status`, {
+                await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://qui.ae'}/api/notifications/order-status`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         orderId: updatedOrder.id,
-                        email: existingOrder.user.email,
-                        customerName: existingOrder.user.name,
+                        email: existingOrder.user?.email || existingOrder.guestEmail,
+                        customerName: existingOrder.user?.name || existingOrder.guestName,
                         status: updatedOrder.status,
                         trackingId: updatedOrder.trackingId,
                         trackingUrl: updatedOrder.trackingUrl,
