@@ -361,9 +361,16 @@ const OrderSummary = ({ totalPrice, items }) => {
                                     <p className='font-semibold text-gray-900 text-sm'>{selectedAddress.name}</p>
                                     <p className='text-xs text-gray-600 mt-1'>{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
                                 </div>
-                                <button onClick={() => setSelectedAddress(null)} className='text-orange-600 hover:text-orange-700'>
-                                    <SquarePenIcon size={16} />
-                                </button>
+                              <button
+    onClick={() => {
+        setEditingAddress(selectedAddress);
+        setShowAddressModal(true);
+    }}
+    className="text-orange-600 hover:text-orange-700"
+>
+    <SquarePenIcon size={16} />
+</button>
+
                             </div>
                         </div>
                     ) : (
