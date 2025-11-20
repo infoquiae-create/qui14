@@ -1,55 +1,59 @@
 "use client";
-export const dynamic = 'force-dynamic'
-import { useEffect, useState } from "react"
-import Loading from "@/components/Loading"
-import { orderDummyData } from "@/assets/assets"
-import { useAuth } from "@clerk/nextjs"
-import axios from "axios"
-import toast from "react-hot-toast"
-import { Package, Truck, X, Download, Printer } from "lucide-react"
-import { downloadInvoice, printInvoice } from "@/lib/generateInvoice"
-import { downloadAwbBill } from "@/lib/generateAwbBill"
+export const dynamic = "force-dynamic";
 
-// Add updateTrackingDetails function
-// (must be inside the component, not top-level)
-
-
-
+import { useEffect, useState } from "react";
+import Loading from "@/components/Loading";
+import { useAuth } from "@clerk/nextjs";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { Truck, X, Download, Printer } from "lucide-react";
+import { downloadInvoice, printInvoice } from "@/lib/generateInvoice";
+import { downloadAwbBill } from "@/lib/generateAwbBill";
 
 export default function StoreOrders() {
-    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'AED';
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "AED";
+    const { getToken } = useAuth();
+
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
     const [trackingData, setTrackingData] = useState({
-        trackingId: '',
-        trackingUrl: '',
-        courier: ''
+        trackingId: "",
+        trackingUrl: "",
+        courier: "",
     });
 
-    const { getToken } = useAuth();
-
-    // Function to update tracking details and notify customer
+    // ✅ FIXED — Correct API for updating tracking
     const updateTrackingDetails = async () => {
         if (!selectedOrder) return;
+
         try {
             const token = await getToken();
-            await axios.post('/api/store/orders/update-tracking', {
-                orderId: selectedOrder.id,
-                ...trackingData
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            toast.success('Tracking details updated & customer notified!');
-            // Optionally refresh orders or close modal
+
+            await axios.put(
+                `/api/store/orders/${selectedOrder.id}`,
+                {
+                    status: selectedOrder.status,
+                    trackingId: trackingData.trackingId,
+                    trackingUrl: trackingData.trackingUrl,
+                    courier: trackingData.courier,
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+
+            toast.success("Tracking updated & customer notified!");
             fetchOrders();
             setIsModalOpen(false);
         } catch (error) {
-            toast.error('Failed to update tracking details');
+            console.error(error);
+            toast.error("Failed to update tracking details");
         }
     };
-    // Move openModal and closeModal to top level
+
     const openModal = (order) => {
         setSelectedOrder(order);
         setIsModalOpen(true);
@@ -60,15 +64,32 @@ export default function StoreOrders() {
         setSelectedOrder(null);
     };
 
+    const updateOrderStatus = async (orderId, status) => {
+        try {
+            const token = await getToken();
+            await axios.post(
+                "/api/store/orders",
+                { orderId, status },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            toast.success("Order status updated!");
+            fetchOrders();
+        } catch (error) {
+            toast.error("Failed to update status");
+        }
+    };
+
     const fetchOrders = async () => {
         try {
             const token = await getToken();
-            const { data } = await axios.get('/api/store/orders', {headers: { Authorization: `Bearer ${token}` }});
-            console.log('[FRONTEND ORDERS API RESPONSE]', data);
-            setOrders(data.orders);
+            const { data } = await axios.get("/api/store/orders", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            setOrders(data.orders || []);
         } catch (error) {
-            console.error('[FRONTEND ORDERS API ERROR]', error);
-            toast.error(error?.response?.data?.error || error.message);
+            toast.error("Failed to load orders");
         } finally {
             setLoading(false);
         }
@@ -82,7 +103,10 @@ export default function StoreOrders() {
 
     return (
         <>
-            <h1 className="text-2xl text-slate-500 mb-5">Store <span className="text-slate-800 font-medium">Orders</span></h1>
+            <h1 className="text-2xl text-slate-500 mb-5">
+                Store <span className="text-slate-800 font-medium">Orders</span>
+            </h1>
+
             {orders.length === 0 ? (
                 <p>No orders found</p>
             ) : (
@@ -90,35 +114,47 @@ export default function StoreOrders() {
                     <table className="w-full text-sm text-left text-gray-600">
                         <thead className="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider">
                             <tr>
-                                {[
-                                    "Sr. No.", "Customer", "Total", "Payment", "Coupon", "Status", "Date"
-                                ].map((heading, i) => (
-                                    <th key={i} className="px-4 py-3">{heading}</th>
-                                ))}
+                                {["Sr. No.", "Customer", "Total", "Payment", "Coupon", "Status", "Date"].map(
+                                    (heading, i) => (
+                                        <th key={i} className="px-4 py-3">
+                                            {heading}
+                                        </th>
+                                    )
+                                )}
                             </tr>
                         </thead>
+
                         <tbody className="divide-y divide-gray-100">
                             {orders.map((order, index) => (
                                 <tr
                                     key={order.id}
-                                    className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                                    className="hover:bg-gray-50 cursor-pointer"
                                     onClick={() => openModal(order)}
                                 >
-                                    <td className="pl-6 text-green-600" >
-                                        {index + 1}
-                                    </td>
+                                    <td className="pl-6 text-green-600">{index + 1}</td>
+
                                     <td className="px-4 py-3">
                                         <div className="flex flex-col gap-1">
-                                            <span>{order.isGuest ? order.guestName : order.user?.name}</span>
+                                            <span>
+                                                {order.isGuest
+                                                    ? order.guestName
+                                                    : order.user?.name || "Unknown"}
+                                            </span>
                                             {order.isGuest && (
-                                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full w-fit font-semibold">
+                                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">
                                                     Guest
                                                 </span>
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 font-medium text-slate-800">{currency}{order.total}</td>
+
+                                    <td className="px-4 py-3 font-medium text-slate-800">
+                                        {currency}
+                                        {order.total}
+                                    </td>
+
                                     <td className="px-4 py-3">{order.paymentMethod}</td>
+
                                     <td className="px-4 py-3">
                                         {order.isCouponUsed ? (
                                             <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
@@ -128,11 +164,17 @@ export default function StoreOrders() {
                                             "—"
                                         )}
                                     </td>
-                                    <td className="px-4 py-3" onClick={(e) => { e.stopPropagation() }}>
+
+                                    <td
+                                        className="px-4 py-3"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
                                         <select
                                             value={order.status}
-                                            onChange={e => updateOrderStatus(order.id, e.target.value)}
-                                            className="border-gray-300 rounded-md text-sm focus:ring focus:ring-blue-200"
+                                            onChange={(e) =>
+                                                updateOrderStatus(order.id, e.target.value)
+                                            }
+                                            className="border-gray-300 rounded-md text-sm"
                                         >
                                             <option value="ORDER_PLACED">ORDER_PLACED</option>
                                             <option value="PROCESSING">PROCESSING</option>
@@ -140,6 +182,7 @@ export default function StoreOrders() {
                                             <option value="DELIVERED">DELIVERED</option>
                                         </select>
                                     </td>
+
                                     <td className="px-4 py-3 text-gray-500">
                                         {new Date(order.createdAt).toLocaleString()}
                                     </td>
@@ -150,241 +193,309 @@ export default function StoreOrders() {
                 </div>
             )}
 
-            {/* Modal */}
+            {/* ---------- MODAL ---------- */}
             {isModalOpen && selectedOrder && (
-                <div onClick={closeModal} className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm text-slate-700 text-sm z-50 p-4" >
-                    <div onClick={e => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-                        {/* Header */}
+                <div
+                    onClick={closeModal}
+                    className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4"
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+                    >
+                        {/* HEADER */}
                         <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
                             <div className="flex justify-between items-center">
                                 <div>
                                     <h2 className="text-2xl font-bold mb-1">Order Details</h2>
-                                    <p className="text-blue-100 text-xs">Order ID: {selectedOrder.id.slice(0, 8).toUpperCase()}</p>
+                                    <p className="text-blue-100 text-xs">
+                                        Order ID: {selectedOrder.id.slice(0, 8).toUpperCase()}
+                                    </p>
                                 </div>
+
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => downloadInvoice(selectedOrder)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors backdrop-blur-sm"
-                                        title="Download Invoice"
+                                        className="flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg backdrop-blur-sm"
                                     >
-                                        <Download size={18} />
-                                        <span className="text-sm">Download</span>
+                                        <Download size={18} /> Download
                                     </button>
+
                                     <button
                                         onClick={() => printInvoice(selectedOrder)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors backdrop-blur-sm"
-                                        title="Print Invoice"
+                                        className="flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg backdrop-blur-sm"
                                     >
-                                        <Printer size={18} />
-                                        <span className="text-sm">Print</span>
+                                        <Printer size={18} /> Print
                                     </button>
+
                                     <button
-                                        onClick={() => downloadAwbBill({
-                                            awbNumber: selectedOrder.trackingId,
-                                            orderId: selectedOrder.id,
-                                            courier: selectedOrder.courier,
-                                            date: selectedOrder.createdAt,
-                                            senderName: process.env.NEXT_PUBLIC_INVOICE_COMPANY_NAME || 'Qui',
-                                            senderAddress: `${process.env.NEXT_PUBLIC_INVOICE_ADDRESS_LINE1 || ''}, ${process.env.NEXT_PUBLIC_INVOICE_ADDRESS_LINE2 || ''}`,
-                                            senderPhone: process.env.NEXT_PUBLIC_INVOICE_CONTACT || '',
-                                            receiverName: selectedOrder.address?.name,
-                                            receiverAddress: `${selectedOrder.address?.street}, ${selectedOrder.address?.city}, ${selectedOrder.address?.state}, ${selectedOrder.address?.zip}, ${selectedOrder.address?.country}`,
-                                            receiverPhone: selectedOrder.address?.phone,
-                                            weight: selectedOrder.weight || '',
-                                            dimensions: selectedOrder.dimensions || '',
-                                            contents: selectedOrder.orderItems?.map(i => i.product?.name).join(', '),
-                                            pdfSize: 'a5' // Pass A5 size for AWB
-                                        })}
-                                        className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors shadow backdrop-blur-sm"
-                                        title="Download AWB Bill"
+                                        onClick={() =>
+                                            downloadAwbBill({
+                                                awbNumber: selectedOrder.trackingId,
+                                                orderId: selectedOrder.id,
+                                                courier: selectedOrder.courier,
+                                                date: selectedOrder.createdAt,
+                                                receiverName:
+                                                    selectedOrder.address?.name ||
+                                                    selectedOrder.guestName,
+                                                receiverAddress: `${selectedOrder.address?.street}, ${selectedOrder.address?.city}, ${selectedOrder.address?.state}, ${selectedOrder.address?.zip}, ${selectedOrder.address?.country}`,
+                                                receiverPhone:
+                                                    selectedOrder.address?.phone ||
+                                                    selectedOrder.guestPhone,
+                                            })
+                                        }
+                                        className="px-4 py-2 bg-orange-500 text-white rounded-lg"
                                     >
-                                        <Download size={18} />
-                                        <span className="text-sm">AWB Bill</span>
+                                        <Download size={18} /> AWB Bill
                                     </button>
-                                    <button onClick={closeModal} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+
+                                    <button
+                                        onClick={closeModal}
+                                        className="p-2 hover:bg-white/20 rounded-full"
+                                    >
                                         <X size={24} />
                                     </button>
                                 </div>
                             </div>
                         </div>
 
+                        {/* BODY */}
                         <div className="p-6 space-y-6">
-                            {/* Tracking Details Section */}
-                            <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-5">
+                            {/* TRACKING */}
+                            <div className="bg-orange-50 border border-orange-200 rounded-xl p-5">
                                 <div className="flex items-center gap-2 mb-4">
                                     <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
                                         <Truck size={20} className="text-white" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-orange-900">Tracking Information</h3>
+                                    <h3 className="text-lg font-semibold text-orange-900">
+                                        Tracking Information
+                                    </h3>
                                 </div>
-                                
-                                {selectedOrder.trackingId ? (
-                                    <div className="bg-white rounded-lg p-4 mb-4">
+
+                                {selectedOrder.trackingId && (
+                                    <div className="bg-white p-4 rounded-lg mb-4">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Tracking ID</p>
-                                                <p className="font-semibold text-slate-900">{selectedOrder.trackingId}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Courier</p>
-                                                <p className="font-semibold text-slate-900">{selectedOrder.courier}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 mb-1">Track Order</p>
+                                            <p>
+                                                <span className="text-xs text-slate-500">
+                                                    Tracking ID
+                                                </span>
+                                                <br />
+                                                <b>{selectedOrder.trackingId}</b>
+                                            </p>
+
+                                            <p>
+                                                <span className="text-xs text-slate-500">
+                                                    Courier
+                                                </span>
+                                                <br />
+                                                <b>{selectedOrder.courier}</b>
+                                            </p>
+
+                                            <p>
+                                                <span className="text-xs text-slate-500">
+                                                    Track Order
+                                                </span>
+                                                <br />
                                                 {selectedOrder.trackingUrl ? (
-                                                    <a href={selectedOrder.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
+                                                    <a
+                                                        href={selectedOrder.trackingUrl}
+                                                        target="_blank"
+                                                        className="text-blue-600 underline"
+                                                    >
                                                         View Tracking
                                                     </a>
                                                 ) : (
-                                                    <p className="text-slate-400">No URL</p>
+                                                    "No URL"
                                                 )}
-                                            </div>
+                                            </p>
                                         </div>
                                     </div>
-                                ) : null}
+                                )}
 
+                                {/* Tracking Form */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-700 block mb-1">Tracking ID *</label>
-                                        <input
-                                            type="text"
-                                            value={trackingData.trackingId}
-                                            onChange={e => setTrackingData({...trackingData, trackingId: e.target.value})}
-                                            placeholder="Enter tracking ID"
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-700 block mb-1">Courier Name *</label>
-                                        <input
-                                            type="text"
-                                            value={trackingData.courier}
-                                            onChange={e => setTrackingData({...trackingData, courier: e.target.value})}
-                                            placeholder="e.g., FedEx, DHL, UPS"
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-700 block mb-1">Tracking URL</label>
-                                        <input
-                                            type="url"
-                                            value={trackingData.trackingUrl}
-                                            onChange={e => setTrackingData({...trackingData, trackingUrl: e.target.value})}
-                                            placeholder="https://..."
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Tracking ID"
+                                        value={trackingData.trackingId}
+                                        onChange={(e) =>
+                                            setTrackingData({
+                                                ...trackingData,
+                                                trackingId: e.target.value,
+                                            })
+                                        }
+                                        className="px-3 py-2 border rounded-lg"
+                                    />
+
+                                    <input
+                                        type="text"
+                                        placeholder="Courier Name"
+                                        value={trackingData.courier}
+                                        onChange={(e) =>
+                                            setTrackingData({
+                                                ...trackingData,
+                                                courier: e.target.value,
+                                            })
+                                        }
+                                        className="px-3 py-2 border rounded-lg"
+                                    />
+
+                                    <input
+                                        type="text"
+                                        placeholder="Tracking URL"
+                                        value={trackingData.trackingUrl}
+                                        onChange={(e) =>
+                                            setTrackingData({
+                                                ...trackingData,
+                                                trackingUrl: e.target.value,
+                                            })
+                                        }
+                                        className="px-3 py-2 border rounded-lg"
+                                    />
                                 </div>
+
                                 <button
                                     onClick={updateTrackingDetails}
-                                    className="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 rounded-lg transition-colors"
+                                    className="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 rounded-lg"
                                 >
                                     Update Tracking & Notify Customer
                                 </button>
                             </div>
 
-                            {/* Customer Details */}
+                            {/* CUSTOMER DETAILS */}
                             <div className="bg-slate-50 rounded-xl p-5">
-                                <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                                    <div className="w-1 h-5 bg-blue-600 rounded-full"></div>
-                                    Customer Details
-                                    {selectedOrder.isGuest && (
-                                        <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full">
-                                            GUEST ORDER
-                                        </span>
-                                    )}
-                                </h3>
+                                <h3 className="font-semibold text-slate-900 mb-3">Customer Details</h3>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                    <div>
-                                        <p className="text-slate-500">Name</p>
-                                        <p className="font-medium text-slate-900">
-                                            {selectedOrder.isGuest ? selectedOrder.guestName : selectedOrder.user?.name}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-500">Email</p>
-                                        <p className="font-medium text-slate-900">
-                                            {selectedOrder.isGuest ? selectedOrder.guestEmail : selectedOrder.user?.email}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-500">Phone</p>
-                                        <p className="font-medium text-slate-900">
-                                            {selectedOrder.isGuest ? selectedOrder.guestPhone : selectedOrder.address?.phone}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-500">Address</p>
-                                        <p className="font-medium text-slate-900">
+                                    <p>
+                                        <span className="text-slate-500">Name</span>
+                                        <br />
+                                        <b>
                                             {selectedOrder.isGuest
-                                                ? `${selectedOrder.address?.street || ''}${selectedOrder.address?.street ? ', ' : ''}${[selectedOrder.address?.city, selectedOrder.address?.state, selectedOrder.address?.zip, selectedOrder.address?.country].filter(Boolean).join(', ')}`
-                                                : `${selectedOrder.address?.street}, ${selectedOrder.address?.city}, ${selectedOrder.address?.state}, ${selectedOrder.address?.zip}, ${selectedOrder.address?.country}`
-                                            }
-                                        </p>
-                                    </div>
+                                                ? selectedOrder.guestName
+                                                : selectedOrder.user?.name}
+                                        </b>
+                                    </p>
+
+                                    <p>
+                                        <span className="text-slate-500">Email</span>
+                                        <br />
+                                        <b>
+                                            {selectedOrder.isGuest
+                                                ? selectedOrder.guestEmail
+                                                : selectedOrder.user?.email}
+                                        </b>
+                                    </p>
+
+                                    <p>
+                                        <span className="text-slate-500">Phone</span>
+                                        <br />
+                                        <b>
+                                            {selectedOrder.isGuest
+                                                ? selectedOrder.guestPhone
+                                                : selectedOrder.address?.phone}
+                                        </b>
+                                    </p>
+
+                                    <p>
+                                        <span className="text-slate-500">Address</span>
+                                        <br />
+                                        <b>
+                                            {selectedOrder.address?.street},{" "}
+                                            {selectedOrder.address?.city},{" "}
+                                            {selectedOrder.address?.state},{" "}
+                                            {selectedOrder.address?.zip},{" "}
+                                            {selectedOrder.address?.country}
+                                        </b>
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Products */}
+                            {/* PRODUCTS */}
                             <div>
-                                <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                                    <div className="w-1 h-5 bg-green-600 rounded-full"></div>
-                                    Order Items
-                                </h3>
+                                <h3 className="font-semibold text-slate-900 mb-3">Order Items</h3>
                                 <div className="space-y-3">
                                     {selectedOrder.orderItems.map((item, i) => (
-                                        <div key={i} className="flex items-center gap-4 border border-slate-200 rounded-xl p-3 bg-white hover:shadow-md transition-shadow">
+                                        <div
+                                            key={i}
+                                            className="flex items-center gap-4 border p-3 rounded-xl"
+                                        >
                                             <img
                                                 src={item.product?.images?.[0]}
                                                 alt={item.product?.name}
-                                                className="w-20 h-20 object-cover rounded-lg"
+                                                className="w-20 h-20 rounded-lg object-cover"
                                             />
+
                                             <div className="flex-1">
-                                                <p className="font-medium text-slate-900">{item.product?.name}</p>
-                                                <p className="text-sm text-slate-600">Quantity: {item.quantity}</p>
-                                                <p className="text-sm font-semibold text-slate-900">{currency}{item.price} each</p>
+                                                <p className="font-medium">{item.product?.name}</p>
+                                                <p className="text-sm">Qty: {item.quantity}</p>
+                                                <p className="text-sm font-semibold">
+                                                    {currency}
+                                                    {item.price} each
+                                                </p>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-lg font-bold text-slate-900">{currency}{item.price * item.quantity}</p>
+
+                                            <div className="text-right font-bold">
+                                                {currency}
+                                                {item.price * item.quantity}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Payment & Status */}
+                            {/* PAYMENT & STATUS */}
                             <div className="bg-slate-50 rounded-xl p-5">
-                                <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                                    <div className="w-1 h-5 bg-purple-600 rounded-full"></div>
-                                    Payment & Status
-                                </h3>
+                                <h3 className="font-semibold text-slate-900 mb-3">Payment & Status</h3>
+
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                                    <div>
-                                        <p className="text-slate-500">Total Amount</p>
-                                        <p className="text-xl font-bold text-slate-900">{currency}{selectedOrder.total}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-500">Payment Method</p>
-                                        <p className="font-medium text-slate-900">{selectedOrder.paymentMethod}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-500">Payment Status</p>
-                                        <p className="font-medium text-slate-900">{selectedOrder.isPaid ? "✓ Paid" : "Pending"}</p>
-                                    </div>
+                                    <p>
+                                        <span className="text-slate-500">Total Amount</span>
+                                        <br />
+                                        <b>
+                                            {currency}
+                                            {selectedOrder.total}
+                                        </b>
+                                    </p>
+
+                                    <p>
+                                        <span className="text-slate-500">Payment Method</span>
+                                        <br />
+                                        <b>{selectedOrder.paymentMethod}</b>
+                                    </p>
+
+                                    <p>
+                                        <span className="text-slate-500">Payment Status</span>
+                                        <br />
+                                        <b>{selectedOrder.isPaid ? "Paid" : "Pending"}</b>
+                                    </p>
+
                                     {selectedOrder.isCouponUsed && (
-                                        <div>
-                                            <p className="text-slate-500">Coupon Used</p>
-                                            <p className="font-medium text-green-600">{selectedOrder.coupon.code} ({selectedOrder.coupon.discount}% off)</p>
-                                        </div>
+                                        <p>
+                                            <span className="text-slate-500">Coupon</span>
+                                            <br />
+                                            <b className="text-green-600">
+                                                {selectedOrder.coupon.code} (
+                                                {selectedOrder.coupon.discount}%)
+                                            </b>
+                                        </p>
                                     )}
-                                    <div>
-                                        <p className="text-slate-500">Order Status</p>
-                                        <p className="font-medium text-slate-900">{selectedOrder.status}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-500">Order Date</p>
-                                        <p className="font-medium text-slate-900">{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
-                                    </div>
+
+                                    <p>
+                                        <span className="text-slate-500">Order Status</span>
+                                        <br />
+                                        <b>{selectedOrder.status}</b>
+                                    </p>
+
+                                    <p>
+                                        <span className="text-slate-500">Date</span>
+                                        <br />
+                                        <b>
+                                            {new Date(
+                                                selectedOrder.createdAt
+                                            ).toLocaleDateString()}
+                                        </b>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -392,5 +503,5 @@ export default function StoreOrders() {
                 </div>
             )}
         </>
-    )
+    );
 }
