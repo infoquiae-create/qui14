@@ -5,59 +5,84 @@ import { NextResponse } from "next/server";
 
 // Debug log helper
 function debugLog(...args) {
-    try { console.log('[ORDER API DEBUG]', ...args); } catch {}
+    try { console.log("[ORDER API DEBUG]", ...args); } catch {}
 }
 
-
-// Update seller order status
-export async function POST(request){
+/* =======================================================
+   UPDATE ORDER STATUS (POST)
+======================================================= */
+export async function POST(request) {
     try {
-        const { userId } = getAuth(request)
-        const storeId = await authSeller(userId)
+        const { userId } = getAuth(request);
+        const storeId = await authSeller(userId);
 
-        if(!storeId){
-            return NextResponse.json({ error: 'not authorized' }, { status: 401 })
+        if (!storeId) {
+            return NextResponse.json({ error: "not authorized" }, { status: 401 });
         }
 
-        const {orderId, status } = await request.json()
+        const { orderId, status } = await request.json();
 
         await prisma.order.update({
             where: { id: orderId, storeId },
-            data: {status}
-        })
+            data: { status }
+        });
 
-        return NextResponse.json({message: "Order Status updated"})
+        return NextResponse.json({ message: "Order Status updated" });
+
     } catch (error) {
         console.error(error);
-        return NextResponse.json({ error: error.code || error.message }, { status: 400 })
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }
 
-// Get all orders for a seller
-export async function GET(request){
-    console.log('[ORDER API ROUTE] Route hit');
-    try {
-        const { userId } = getAuth(request)
-        debugLog('userId from Clerk:', userId);
-        const storeId = await authSeller(userId)
-        debugLog('storeId from authSeller:', storeId);
+/* =======================================================
+   GET ALL STORE ORDERS (GET)
+======================================================= */
+export async function GET(request) {
+    console.log("[ORDER API ROUTE] Route hit");
 
-        if(!storeId){
-            debugLog('Not authorized: no storeId');
-            return NextResponse.json({ error: 'not authorized' }, { status: 401 })
+    try {
+        const { userId } = getAuth(request);
+        debugLog("userId from Clerk:", userId);
+
+        const storeId = await authSeller(userId);
+        debugLog("storeId from authSeller:", storeId);
+
+        if (!storeId) {
+            return NextResponse.json({ error: "not authorized" }, { status: 401 });
         }
 
         const orders = await prisma.order.findMany({
-            where: {storeId},
-            include: {user: true, address: true, orderItems: {include: {product: true}}},
-            orderBy: {createdAt: 'desc' }
-        })
-        debugLog('orders found:', orders.length);
+            where: { storeId },
+            orderBy: { createdAt: "desc" },
 
-        return NextResponse.json({orders})
+            include: {
+                // Logged-in user purchases
+                user: {
+                    select: {
+                        name: true,
+                        email: true,
+                    }
+                },
+
+                // Address for both guest + logged-in
+                address: true,
+
+                // Products inside the order
+                orderItems: {
+                    include: {
+                        product: true
+                    }
+                }
+            }
+        });
+
+        debugLog("orders found:", orders.length);
+
+        return NextResponse.json({ orders });
+
     } catch (error) {
-        console.error('[ORDER API ERROR]', error);
-        debugLog('API error:', error);
-        return NextResponse.json({ error: error.code || error.message }, { status: 400 })
+        console.error("[ORDER API ERROR]", error);
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }
