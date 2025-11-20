@@ -441,7 +441,13 @@ const OrderSummary = ({ totalPrice, items }) => {
                 {loading ? 'Placing Order...' : (!isSignedIn && !isGuestCheckout ? 'Sign In or Use Guest Checkout' : 'Place Order ')}
             </button>
 
-            {showAddressModal && <AddressModal setShowAddressModal={setShowAddressModal} />}
+{showAddressModal && (
+    <AddressModal
+        setShowAddressModal={setShowAddressModal}
+        editingAddress={editingAddress}
+        setEditingAddress={setEditingAddress}
+    />
+)}
 
         </div>
     )
