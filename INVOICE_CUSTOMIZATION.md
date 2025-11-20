@@ -6,8 +6,8 @@ Your invoice now includes:
 
 ### 1. **Header Section (Blue Background)**
 - Company Name: "Qui" (You can change this)
-- Company Address: 123, Business Street, City - 400001
-- Contact: Qui.com@gmail.com | +91 1234567890
+- Company Address: Dubai, UAE
+- Contact: info@qui.ae
 - Invoice Number: Auto-generated from Order ID
 
 ### 2. **Bill To Section (Blue Header)**
@@ -26,7 +26,7 @@ Your invoice now includes:
 
 ### 5. **Totals Section (Gray Box)**
 - Subtotal
-- Shipping (AED5)
+- Shipping (0)
 - Discount (if coupon applied - shown in green)
 - Grand Total (Blue box with white text)
 
@@ -42,31 +42,16 @@ Your invoice now includes:
 
 ## 🎨 How to Customize
 
-### Add Your Company Logo
 
-1. **Option 1: Using Image URL**
-   ```javascript
-   // In lib/generateInvoice.js, after line 10, add:
-   const logoImg = new Image();
-   logoImg.src = 'https://your-logo-url.com/logo.png';
-   doc.addImage(logoImg, 'PNG', 14, 10, 40, 20); // x, y, width, height
-   ```
-
-2. **Option 2: Using Base64**
-   ```javascript
-   // Convert your logo to base64 and add:
-   const logoBase64 = 'data:image/png;base64,iVBORw0KG...'; // Your base64 string
-   doc.addImage(logoBase64, 'PNG', 14, 10, 40, 20);
-   ```
 
 ### Change Company Details
 
 In `lib/generateInvoice.js`, find these lines (around line 18-20):
 
 ```javascript
-doc.text('Your Company Name', 14, 28);
-doc.text('123, Business Street, City - 400001', 14, 33);
-doc.text('Email: Qui.com@gmail.com | Phone: +91 1234567890', 14, 38);
+doc.text('Qui', 14, 28);
+doc.text('Dubai.UAE', 14, 33);
+doc.text('Email: info@qui.ae', 14, 38);
 ```
 
 Replace with your actual company information.
