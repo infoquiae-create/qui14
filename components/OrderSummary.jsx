@@ -431,7 +431,7 @@ const OrderSummary = ({ totalPrice, items }) => {
                         : 'bg-orange-500 text-white hover:bg-orange-600')
                 }`}
             >
-                {loading ? 'Placing Order...' : (!isSignedIn && !isGuestCheckout ? 'Sign In or Use Guest Checkout' : 'Proceed to Checkout')}
+                {loading ? 'Placing Order...' : (!isSignedIn && !isGuestCheckout ? 'Sign In or Use Guest Checkout' : 'Place Order ')}
             </button>
 
             {showAddressModal && <AddressModal setShowAddressModal={setShowAddressModal} />}
