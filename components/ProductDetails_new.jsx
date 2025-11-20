@@ -15,9 +15,10 @@ import { useState, useEffect } from "react";
 const ProductDetails = ({ product }) => {
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate loading for SSR/CSR hydration or data fetch
-    if (product) {
+ useEffect(() => {
+    if (product === undefined || product === null) {
+      setLoading(true);
+    } else {
       setLoading(false);
     }
   }, [product]);
