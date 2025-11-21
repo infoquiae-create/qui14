@@ -7,12 +7,11 @@ import { useSelector } from "react-redux";
 export default function FiveStarRated() {
     const products = useSelector(state => state.product.list);
 
-    // Filter products with 5-star average rating
     const fiveStarProducts = products.filter(product => {
         if (!product.rating || product.rating.length === 0) return false;
         
         const averageRating = product.rating.reduce((acc, item) => acc + item.rating, 0) / product.rating.length;
-        return averageRating >= 4.5; // Products with 4.5+ stars
+        return averageRating >= 4.5; 
     });
 
     return (
