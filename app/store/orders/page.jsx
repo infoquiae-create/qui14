@@ -381,7 +381,7 @@ export default function StoreOrders() {
                                         <b>
                                             {selectedOrder.isGuest
                                                 ? selectedOrder.guestName
-                                                : selectedOrder.user?.name}
+                                                : selectedOrder.user?.name || selectedOrder.guestName || "Unknown"}
                                         </b>
                                     </p>
 
@@ -391,7 +391,7 @@ export default function StoreOrders() {
                                         <b>
                                             {selectedOrder.isGuest
                                                 ? selectedOrder.guestEmail
-                                                : selectedOrder.user?.email}
+                                                : selectedOrder.user?.email || selectedOrder.guestEmail || "Unknown"}
                                         </b>
                                     </p>
 
