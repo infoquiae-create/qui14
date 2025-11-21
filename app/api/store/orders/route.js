@@ -55,19 +55,16 @@ export async function GET(request) {
         const orders = await prisma.order.findMany({
             where: { storeId },
             orderBy: { createdAt: "desc" },
-
             include: {
-                // Logged-in user purchases
                 user: {
                     select: {
                         id: true,
                         name: true,
                         email: true,
-                        phone: true, // Now included
+                        phone: true,
                         Address: true,
                     }
                 },
-                // Guest user purchases
                 guestUser: {
                     select: {
                         id: true,
@@ -77,27 +74,13 @@ export async function GET(request) {
                     }
                 },
                 address: true,
-                orderItems: true,
-            }
-        });
-                user: {
-                    select: {
-                        name: true,
-                        email: true,
-                        address: true
-                    }
-                },
-
-                // Address for both guest + logged-in
-                address: true,
-
-                // Products inside the order
                 orderItems: {
                     include: {
                         product: true
                     }
                 }
             }
+        });
         });
 
         debugLog("orders found:", orders.length);
