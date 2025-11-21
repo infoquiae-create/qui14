@@ -81,7 +81,6 @@ export async function GET(request) {
                 }
             }
         });
-        });
 
         debugLog("orders found:", orders.length);
 
