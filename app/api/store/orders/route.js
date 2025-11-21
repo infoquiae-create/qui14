@@ -60,9 +60,30 @@ export async function GET(request) {
                 // Logged-in user purchases
                 user: {
                     select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true, // Now included
+                        Address: true,
+                    }
+                },
+                // Guest user purchases
+                guestUser: {
+                    select: {
+                        id: true,
                         name: true,
                         email: true,
                         phone: true,
+                    }
+                },
+                address: true,
+                orderItems: true,
+            }
+        });
+                user: {
+                    select: {
+                        name: true,
+                        email: true,
                         address: true
                     }
                 },

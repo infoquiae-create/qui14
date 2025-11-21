@@ -15,6 +15,7 @@ model User {
     name  String
     email String
     image String
+    phone String? // Added phone field for customer info
     cart  Json   @default("{}")
 
     // Relations
