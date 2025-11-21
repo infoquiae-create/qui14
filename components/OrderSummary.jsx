@@ -24,6 +24,7 @@ const OrderSummary = ({ totalPrice, items }) => {
     const [paymentMethod, setPaymentMethod] = useState('COD');
     const [selectedAddress, setSelectedAddress] = useState(null);
     const [showAddressModal, setShowAddressModal] = useState(false);
+    const [editAddressIndex, setEditAddressIndex] = useState(null);
     const [couponCodeInput, setCouponCodeInput] = useState('');
     const [coupon, setCoupon] = useState('');
     const [loading, setLoading] = useState(false);
@@ -372,26 +373,34 @@ const OrderSummary = ({ totalPrice, items }) => {
                                     <p className='font-semibold text-gray-900 text-sm'>{selectedAddress.name}</p>
                                     <p className='text-xs text-gray-600 mt-1'>{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
                                 </div>
-                                <button onClick={() => setSelectedAddress(null)} className='text-orange-600 hover:text-orange-700'>
-                                    <SquarePenIcon size={16} />
-                                </button>
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setEditAddressIndex(addressList.findIndex(a => a === selectedAddress)); setShowAddressModal(true); }} className='text-blue-600 hover:text-blue-700'>
+                                        <SquarePenIcon size={16} />
+                                    </button>
+                                    <button onClick={() => setSelectedAddress(null)} className='text-orange-600 hover:text-orange-700'>
+                                        Change
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ) : (
                         <div>
-                            {
-                                addressList.length > 0 && (
+                            {addressList.length > 0 && (
+                                <div>
                                     <select className='border border-gray-300 p-2.5 w-full mb-2 outline-none rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500' onChange={(e) => setSelectedAddress(addressList[e.target.value])} >
                                         <option value="">Select Address</option>
-                                        {
-                                            addressList.map((address, index) => (
-                                                <option key={index} value={index}>{address.name}, {address.city}, {address.state}</option>
-                                            ))
-                                        }
+                                        {addressList.map((address, index) => (
+                                            <option key={index} value={index}>{address.name}, {address.city}, {address.state}</option>
+                                        ))}
                                     </select>
-                                )
-                            }
-                            <button className='flex items-center gap-1.5 text-orange-600 hover:text-orange-700 text-sm font-semibold' onClick={() => setShowAddressModal(true)} >
+                                    <div className="flex gap-2 mt-2">
+                                        {addressList.map((address, index) => (
+                                            <button key={index} className="text-xs text-blue-600 hover:text-blue-700 underline" onClick={() => { setEditAddressIndex(index); setShowAddressModal(true); }}>Edit {address.name}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <button className='flex items-center gap-1.5 text-orange-600 hover:text-orange-700 text-sm font-semibold' onClick={() => { setEditAddressIndex(null); setShowAddressModal(true); }} >
                                 <PlusIcon size={16} /> Add New Address
                             </button>
                         </div>
@@ -445,7 +454,7 @@ const OrderSummary = ({ totalPrice, items }) => {
                 {loading ? 'Placing Order...' : (!isSignedIn && !isGuestCheckout ? 'Sign In or Use Guest Checkout' : 'Place Order')}
             </button>
 
-            {showAddressModal && <AddressModal setShowAddressModal={setShowAddressModal} />}
+            {showAddressModal && <AddressModal setShowAddressModal={setShowAddressModal} editAddress={editAddressIndex !== null ? addressList[editAddressIndex] : null} />}
 
         </div>
     )

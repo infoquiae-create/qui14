@@ -294,6 +294,7 @@ export async function GET(request) {
       include: {
         orderItems: { include: { product: true } },
         address: true,
+        user: true,
       },
       orderBy: { createdAt: "desc" },
     });
