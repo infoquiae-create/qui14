@@ -217,7 +217,7 @@ export default function StoreOrders() {
                                 <div>
                                     <h2 className="text-2xl font-bold mb-1">Order Details</h2>
                                     <p className="text-blue-100 text-xs">
-                                        Order ID: {selectedOrder.id.slice(0, 8).toUpperCase()}
+                                        Order ID: {String(selectedOrder.id).slice(0, 8).toUpperCase()}
                                     </p>
                                 </div>
 
