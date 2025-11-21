@@ -31,11 +31,20 @@ export async function GET(request){
          }));
          let customers = [];
          if (loggedInCustomerIds.length > 0) {
+            // Fetch user details and their default address
             const loggedInCustomers = await prisma.user.findMany({
                where: { id: { in: loggedInCustomerIds } },
-               select: { id: true, name: true, email: true }
+               select: { id: true, name: true, email: true, Address: { select: { phone: true, street: true, city: true, state: true, zip: true, country: true } } }
             });
-            customers = [...loggedInCustomers, ...guestCustomers];
+            // Flatten address info for dashboard
+            const formattedLoggedInCustomers = loggedInCustomers.map(u => ({
+                id: u.id,
+                name: u.name,
+                email: u.email,
+                phone: u.Address?.[0]?.phone || '',
+                address: u.Address?.[0] ? `${u.Address[0].street}, ${u.Address[0].city}, ${u.Address[0].state}, ${u.Address[0].zip}, ${u.Address[0].country}` : ''
+            }));
+            customers = [...formattedLoggedInCustomers, ...guestCustomers];
          } else {
             customers = guestCustomers;
          }

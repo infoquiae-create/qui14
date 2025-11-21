@@ -114,7 +114,7 @@ export default function StoreOrders() {
                     <table className="w-full text-sm text-left text-gray-600">
                         <thead className="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider">
                             <tr>
-                                {["Sr. No.", "Customer", "Total", "Payment", "Coupon", "Status", "Date"].map(
+                                {['Sr. No.', 'Customer', 'Email', 'Phone', 'Address', 'Total', 'Payment', 'Coupon', 'Status', 'Date'].map(
                                     (heading, i) => (
                                         <th key={i} className="px-4 py-3">
                                             {heading}
@@ -146,6 +146,12 @@ export default function StoreOrders() {
                                                 </span>
                                             )}
                                         </div>
+                                    </td>
+                                    <td className="px-4 py-3">{order.isGuest ? order.guestEmail : order.user?.email || ''}</td>
+                                    <td className="px-4 py-3">{order.isGuest ? order.guestPhone : order.user?.phone || order.address?.phone || ''}</td>
+                                    <td className="px-4 py-3">{order.isGuest
+                                        ? `${order.address?.street}, ${order.address?.city}, ${order.address?.state}, ${order.address?.zip}, ${order.address?.country}`
+                                        : order.user?.address || `${order.address?.street}, ${order.address?.city}, ${order.address?.state}, ${order.address?.zip}, ${order.address?.country}`}
                                     </td>
 
                                     <td className="px-4 py-3 font-medium text-slate-800">
@@ -393,7 +399,7 @@ export default function StoreOrders() {
                                         <b>
                                             {selectedOrder.isGuest
                                                 ? selectedOrder.guestPhone
-                                                : selectedOrder.address?.phone}
+                                                : selectedOrder.user?.phone || selectedOrder.address?.phone}
                                         </b>
                                     </p>
 
@@ -401,11 +407,9 @@ export default function StoreOrders() {
                                         <span className="text-slate-500">Address</span>
                                         <br />
                                         <b>
-                                            {selectedOrder.address?.street},{" "}
-                                            {selectedOrder.address?.city},{" "}
-                                            {selectedOrder.address?.state},{" "}
-                                            {selectedOrder.address?.zip},{" "}
-                                            {selectedOrder.address?.country}
+                                            {selectedOrder.isGuest
+                                                ? selectedOrder.address?.street + ', ' + selectedOrder.address?.city + ', ' + selectedOrder.address?.state + ', ' + selectedOrder.address?.zip + ', ' + selectedOrder.address?.country
+                                                : selectedOrder.user?.address || (selectedOrder.address?.street + ', ' + selectedOrder.address?.city + ', ' + selectedOrder.address?.state + ', ' + selectedOrder.address?.zip + ', ' + selectedOrder.address?.country)}
                                         </b>
                                     </p>
                                 </div>
