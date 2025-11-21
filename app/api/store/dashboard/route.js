@@ -22,8 +22,24 @@ export async function GET(request){
          })
 
          // Get unique customers who have ordered from this store
-         const uniqueCustomerIds = [...new Set(orders.map(order => order.userId))]
-         const totalCustomers = uniqueCustomerIds.length
+         const loggedInCustomerIds = [...new Set(orders.filter(o => !o.isGuest).map(order => order.userId))];
+         const guestCustomers = orders.filter(o => o.isGuest).map(order => ({
+            id: `guest-${o.id}`,
+            name: o.guestName || 'Guest',
+            email: o.guestEmail || 'No email',
+            phone: o.guestPhone || '',
+         }));
+         let customers = [];
+         if (loggedInCustomerIds.length > 0) {
+            const loggedInCustomers = await prisma.user.findMany({
+               where: { id: { in: loggedInCustomerIds } },
+               select: { id: true, name: true, email: true }
+            });
+            customers = [...loggedInCustomers, ...guestCustomers];
+         } else {
+            customers = guestCustomers;
+         }
+         const totalCustomers = customers.length;
 
          // Get abandoned carts for this store
          const abandonedCarts = await prisma.abandonedCart.count({
@@ -36,6 +52,7 @@ export async function GET(request){
             totalEarnings: Math.round(orders.reduce((acc, order)=>  acc + order.total, 0)),
             totalProducts: products.length,
             totalCustomers,
+            customers, // Array of {id, name, email}
             abandonedCarts
          }
 

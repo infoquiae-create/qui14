@@ -27,6 +27,7 @@ const OrderSummary = ({ totalPrice, items }) => {
     const [couponCodeInput, setCouponCodeInput] = useState('');
     const [coupon, setCoupon] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showOrderLoader, setShowOrderLoader] = useState(false);
     
     // Guest checkout fields
     const [isGuestCheckout, setIsGuestCheckout] = useState(!isSignedIn);
@@ -165,9 +166,12 @@ const OrderSummary = ({ totalPrice, items }) => {
                         } else {
                             dispatch(clearCart());
                             toast.success(data.message);
-                            // For guests, redirect to first order success (or show all order IDs)
-                            const orderId = data.orders ? data.orders[0].id : data.order.id;
-                            router.push(`/order-success?orderId=${orderId}`);
+                            setShowOrderLoader(true);
+                            setTimeout(() => {
+                                setShowOrderLoader(false);
+                                const orderId = data.orders ? data.orders[0].id : data.order.id;
+                                router.push(`/order-success?orderId=${orderId}`);
+                            }, 2000);
                         }
                     } else {
                         router.push('/order-failed');
@@ -208,7 +212,11 @@ const OrderSummary = ({ totalPrice, items }) => {
                 // Clear cart immediately for COD orders
                 dispatch(clearCart())
                 toast.success(data.message)
-                router.push('/orders')
+                setShowOrderLoader(true);
+                setTimeout(() => {
+                    setShowOrderLoader(false);
+                    router.push('/orders')
+                }, 2000);
                 // Fetch updated cart from server to sync
                 dispatch(fetchCart({getToken}))
             }
@@ -227,6 +235,9 @@ const OrderSummary = ({ totalPrice, items }) => {
 
     const allCountries = countryList().getData();
 
+    if (showOrderLoader) {
+        return <div className="flex flex-col items-center justify-center min-h-[300px] py-12"><h2 className="text-lg font-bold text-gray-900 mb-4 uppercase">Placing your order...</h2><div className="my-8"><svg className="animate-spin h-12 w-12 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg></div></div>;
+    }
     return (
         <div className='w-full bg-white rounded-lg shadow-sm border border-gray-200 p-5'>
             <h2 className='text-lg font-bold text-gray-900 mb-4 uppercase'>Order Summary</h2>
