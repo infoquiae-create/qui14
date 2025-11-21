@@ -151,7 +151,9 @@ export default function StoreOrders() {
                                     <td className="px-4 py-3">{order.isGuest ? order.guestPhone : order.user?.phone || order.address?.phone || ''}</td>
                                     <td className="px-4 py-3">{order.isGuest
                                         ? `${order.address?.street}, ${order.address?.city}, ${order.address?.state}, ${order.address?.zip}, ${order.address?.country}`
-                                        : order.user?.address || `${order.address?.street}, ${order.address?.city}, ${order.address?.state}, ${order.address?.zip}, ${order.address?.country}`}
+                                        : (order.user?.Address && order.user.Address.length > 0
+                                            ? `${order.user.Address[0]?.street}, ${order.user.Address[0]?.city}, ${order.user.Address[0]?.state}, ${order.user.Address[0]?.zip}, ${order.user.Address[0]?.country}`
+                                            : `${order.address?.street}, ${order.address?.city}, ${order.address?.state}, ${order.address?.zip}, ${order.address?.country}`)}
                                     </td>
 
                                     <td className="px-4 py-3 font-medium text-slate-800">
@@ -409,7 +411,9 @@ export default function StoreOrders() {
                                         <b>
                                             {selectedOrder.isGuest
                                                 ? selectedOrder.address?.street + ', ' + selectedOrder.address?.city + ', ' + selectedOrder.address?.state + ', ' + selectedOrder.address?.zip + ', ' + selectedOrder.address?.country
-                                                : selectedOrder.user?.address || (selectedOrder.address?.street + ', ' + selectedOrder.address?.city + ', ' + selectedOrder.address?.state + ', ' + selectedOrder.address?.zip + ', ' + selectedOrder.address?.country)}
+                                                : (selectedOrder.user?.Address && selectedOrder.user.Address.length > 0
+                                                    ? selectedOrder.user.Address[0]?.street + ', ' + selectedOrder.user.Address[0]?.city + ', ' + selectedOrder.user.Address[0]?.state + ', ' + selectedOrder.user.Address[0]?.zip + ', ' + selectedOrder.user.Address[0]?.country
+                                                    : (selectedOrder.address?.street + ', ' + selectedOrder.address?.city + ', ' + selectedOrder.address?.state + ', ' + selectedOrder.address?.zip + ', ' + selectedOrder.address?.country))}
                                         </b>
                                     </p>
                                 </div>
