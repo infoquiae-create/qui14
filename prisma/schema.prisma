@@ -89,7 +89,7 @@ enum PaymentMethod {
 
 // Required for creating an Order: total, userId, storeId, addressId, isPaid, paymentMethod, isCouponUsed, coupon (JSON), orderItems (nested)
 model Order {
-    id            Int           @id @default(autoincrement())
+    id            String        @id @default(cuid())
     total         Float
     status        OrderStatus   @default(ORDER_PLACED)
     userId        String?
@@ -119,7 +119,7 @@ model Order {
 
 // Required for creating an OrderItem: orderId, productId, quantity, price
 model OrderItem {
-    orderId   Int
+    orderId   String
     productId String
     quantity  Int
     price     Float
@@ -140,7 +140,7 @@ model Rating {
     approved  Boolean  @default(false)
     userId    String
     productId String
-    orderId   Int?
+    orderId   String?
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
@@ -168,7 +168,7 @@ model WishlistItem {
 // Return and Replacement Requests
 model ReturnRequest {
     id            String        @id @default(cuid())
-    orderId       Int
+    orderId       String
     userId        String?
     storeId       String
     type          String        // "RETURN" or "REPLACEMENT"
