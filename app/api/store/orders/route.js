@@ -65,14 +65,6 @@ export async function GET(request) {
                         Address: true,
                     }
                 },
-                guestUser: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        phone: true,
-                    }
-                },
                 address: true,
                 orderItems: {
                     include: {
