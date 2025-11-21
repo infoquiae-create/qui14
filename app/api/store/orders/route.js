@@ -62,6 +62,8 @@ export async function GET(request) {
                     select: {
                         name: true,
                         email: true,
+                        phone: true,
+                        address: true
                     }
                 },
 
