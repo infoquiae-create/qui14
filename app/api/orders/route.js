@@ -190,8 +190,13 @@ export async function POST(request) {
         orderData.guestEmail = guestInfo.email;
         orderData.guestPhone = guestInfo.phone;
       } else {
+        // For logged-in users, set userId and addressId, and ensure guest fields are not set
         orderData.userId = userId;
         orderData.addressId = addressId;
+        orderData.isGuest = false;
+        orderData.guestName = undefined;
+        orderData.guestEmail = undefined;
+        orderData.guestPhone = undefined;
       }
 
       const created = await prisma.order.create({

@@ -65,6 +65,20 @@ export default function StoreOrders() {
     };
 
     const updateOrderStatus = async (orderId, status) => {
+            // Delete order by ID
+            const deleteOrder = async (orderId) => {
+                try {
+                    const token = await getToken();
+                    await axios.delete(`/api/store/orders/${orderId}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    toast.success("Order deleted successfully!");
+                    fetchOrders();
+                    closeModal();
+                } catch (error) {
+                    toast.error("Failed to delete order");
+                }
+            };
         try {
             const token = await getToken();
             await axios.post(
@@ -262,6 +276,12 @@ export default function StoreOrders() {
                                         className="p-2 hover:bg-white/20 rounded-full"
                                     >
                                         <X size={24} />
+                                    </button>
+                                    <button
+                                        onClick={() => deleteOrder(selectedOrder.id)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg ml-2"
+                                    >
+                                        <X size={18} /> Delete Order
                                     </button>
                                 </div>
                             </div>

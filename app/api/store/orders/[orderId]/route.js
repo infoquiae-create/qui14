@@ -3,6 +3,36 @@ import authSeller from "@/middlewares/authSeller";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+// Delete order by ID (store admin only)
+export async function DELETE(request, { params }) {
+    try {
+        const { userId } = getAuth(request);
+        const storeId = await authSeller(userId);
+        const orderId = params.orderId;
+
+        // Verify the order belongs to this store
+        const existingOrder = await prisma.order.findFirst({
+            where: {
+                id: orderId,
+                storeId: storeId
+            }
+        });
+
+        if (!existingOrder) {
+            return NextResponse.json({ error: 'Order not found or unauthorized' }, { status: 404 });
+        }
+
+        await prisma.order.delete({
+            where: { id: orderId }
+        });
+
+        return NextResponse.json({ message: 'Order deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+}
+
 // Update order status and tracking details
 export async function PUT(request, { params }) {
     try {
