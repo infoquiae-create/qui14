@@ -89,7 +89,7 @@ enum PaymentMethod {
 
 // Required for creating an Order: total, userId, storeId, addressId, isPaid, paymentMethod, isCouponUsed, coupon (JSON), orderItems (nested)
 model Order {
-    id            String        @id @default(cuid())
+    id            String        @id
     total         Float
     status        OrderStatus   @default(ORDER_PLACED)
     userId        String?

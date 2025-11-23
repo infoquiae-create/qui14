@@ -32,6 +32,7 @@ export async function GET(request, { params }) {
                 storeId: storeId
             },
             include: {
+                user: { select: { name: true, email: true, phone: true, Address: true } },
                 orderItems: {
                     include: {
                         product: true

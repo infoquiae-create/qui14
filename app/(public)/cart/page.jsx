@@ -1,5 +1,6 @@
 
-'use client'
+"use client";
+import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
@@ -57,14 +58,16 @@ export default function Cart() {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // Get unique products from recent orders (limit to last 8 products)                                                                        const recentProducts = [];
+            // Get unique products from recent orders (limit to last 8 products)
+            const recentProducts = [];
             const seenProductIds = new Set();
 
             if (data.orders && data.orders.length > 0) {
                 for (const order of data.orders) {
                     for (const item of order.orderItems) {
-                        if (!seenProductIds.has(item.product.id) && recentProducts.length < 8) {                                                                        seenProductIds.add(item.product.id);      
-                            recentProducts.push(item.product);        
+                        if (!seenProductIds.has(item.product.id) && recentProducts.length < 8) {
+                            seenProductIds.add(item.product.id);
+                            recentProducts.push(item.product);
                         }
                     }
                     if (recentProducts.length >= 8) break;

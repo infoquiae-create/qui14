@@ -124,7 +124,7 @@ export default function StoreOrders() {
             {orders.length === 0 ? (
                 <p>No orders found</p>
             ) : (
-                <div className="overflow-x-auto max-w-4xl rounded-md shadow border border-gray-200">
+                <div className="overflow-x-auto w-full rounded-md shadow border border-gray-200">
                     <table className="w-full text-sm text-left text-gray-600">
                         <thead className="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider">
                             <tr>
@@ -149,7 +149,7 @@ export default function StoreOrders() {
 
                                     <td className="px-4 py-3">
                                         <div className="flex flex-col gap-1">
-                                            <span>
+                                            <span className={(!order.isGuest && !order.user?.name) ? "text-red-500 font-semibold" : ""}>
                                                 {order.isGuest
                                                     ? order.guestName
                                                     : order.user?.name || "Unknown"}
@@ -161,7 +161,7 @@ export default function StoreOrders() {
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3">{order.isGuest ? order.guestEmail : order.user?.email || ''}</td>
+                                    <td className={(!order.isGuest && !order.user?.email) ? "px-4 py-3 text-red-500 font-semibold" : "px-4 py-3"}>{order.isGuest ? order.guestEmail : order.user?.email || ''}</td>
                                     <td className="px-4 py-3">{order.isGuest ? order.guestPhone : order.user?.phone || order.address?.phone || ''}</td>
                                     <td className="px-4 py-3">{order.isGuest
                                         ? `${order.address?.street}, ${order.address?.city}, ${order.address?.state}, ${order.address?.zip}, ${order.address?.country}`

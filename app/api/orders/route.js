@@ -1,3 +1,14 @@
+// Generate a unique 6-digit order ID
+async function generateUniqueOrderId(prisma) {
+  let unique = false;
+  let orderId;
+  while (!unique) {
+    orderId = Math.floor(100000 + Math.random() * 900000).toString();
+    const exists = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!exists) unique = true;
+  }
+  return orderId;
+}
 import prisma from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
 import { PaymentMethod } from "@prisma/client";
@@ -197,7 +208,26 @@ export async function POST(request) {
         orderData.guestName = undefined;
         orderData.guestEmail = undefined;
         orderData.guestPhone = undefined;
+
+        // --- NEW: Update user name/email from address if missing ---
+        if (addressId) {
+          const address = await prisma.address.findUnique({ where: { id: addressId } });
+          if (address) {
+            // Only update if missing or empty
+            await prisma.user.update({
+              where: { id: userId },
+              data: {
+                name: address.name || undefined,
+                email: address.email || undefined,
+                phone: address.phone || undefined,
+              },
+            });
+          }
+        }
       }
+
+      // Generate and assign a unique 6-digit order ID
+      orderData.id = await generateUniqueOrderId(prisma);
 
       const created = await prisma.order.create({
         data: orderData,

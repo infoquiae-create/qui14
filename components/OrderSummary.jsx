@@ -7,8 +7,11 @@ import { useRouter } from 'next/navigation';
 import {Protect, useAuth, useUser} from '@clerk/nextjs'
 import axios from 'axios';
 import { clearCart, fetchCart } from '@/lib/features/cart/cartSlice';
-import countryList from 'react-select-country-list';
+import { fetchAddress } from '@/lib/features/address/addressSlice';
+
 import { countryCodes } from '@/assets/countryCodes';
+import countryList from 'react-select-country-list';
+
 
 const OrderSummary = ({ totalPrice, items }) => {
 
@@ -20,6 +23,13 @@ const OrderSummary = ({ totalPrice, items }) => {
     const router = useRouter();
 
     const addressList = useSelector(state => state.address.list);
+
+    // Fetch addresses for logged-in users (must be after all hooks are defined)
+    useEffect(() => {
+        if (typeof isSignedIn !== 'undefined' && isSignedIn && getToken) {
+            dispatch(fetchAddress({ getToken }));
+        }
+    }, [isSignedIn, getToken, dispatch]);
 
     const [paymentMethod, setPaymentMethod] = useState('COD');
     const [selectedAddress, setSelectedAddress] = useState(null);
@@ -167,12 +177,8 @@ const OrderSummary = ({ totalPrice, items }) => {
                         } else {
                             dispatch(clearCart());
                             toast.success(data.message);
-                            setShowOrderLoader(true);
-                            setTimeout(() => {
-                                setShowOrderLoader(false);
-                                const orderId = data.orders ? data.orders[0].id : data.order.id;
-                                router.push(`/order-success?orderId=${orderId}`);
-                            }, 2000);
+                            const orderId = data.orders ? data.orders[0].id : data.order.id;
+                            router.push(`/order-success?orderId=${orderId}`);
                         }
                     } else {
                         router.push('/order-failed');
@@ -211,15 +217,14 @@ const OrderSummary = ({ totalPrice, items }) => {
                 window.location.href = data.session.url;
             }else{
                 // Clear cart immediately for COD orders
-                dispatch(clearCart())
-                toast.success(data.message)
+                dispatch(clearCart());
+                dispatch(fetchCart({getToken}));
+                toast.success(data.message);
                 setShowOrderLoader(true);
                 setTimeout(() => {
                     setShowOrderLoader(false);
-                    router.push('/orders')
+                    router.push(`/order-success?orderId=${data.order.id}`);
                 }, 2000);
-                // Fetch updated cart from server to sync
-                dispatch(fetchCart({getToken}))
             }
            }else{
             router.push('/order-failed');
